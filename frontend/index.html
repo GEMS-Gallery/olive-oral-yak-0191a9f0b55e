@@ -1,13 +1,360 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FlashCash</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICFlash</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --background-color: #ffffff;
+            --text-color: #000000;
+            --secondary-color: #808080;
+            --border-color: #e0e0e0;
+            --border-radius: 4px;
+            --ic-orange: #F15A24;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        .container {
+            max-width: 414px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            font-weight: 700;
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: var(--ic-orange);
+        }
+        .balance {
+            font-size: 72px;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+        }
+        .tab i {
+            margin-right: 8px;
+        }
+        .tab.active {
+            color: var(--ic-orange);
+            border-bottom: 2px solid var(--ic-orange);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        input {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--ic-orange);
+        }
+        .input-icon {
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            transform: translateY(-50%);
+            color: var(--secondary-color);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--ic-orange);
+            color: var(--background-color);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        button i {
+            margin-right: 8px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .transaction-list {
+            margin-top: 30px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .transaction {
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .transaction-icon {
+            margin-right: 12px;
+            font-size: 20px;
+            color: var(--ic-orange);
+        }
+        .transaction-details {
+            flex-grow: 1;
+        }
+        .transaction-amount {
+            font-weight: 600;
+        }
+        .transaction-date {
+            font-size: 12px;
+            color: var(--secondary-color);
+        }
+        .qr-code {
+            text-align: center;
+            margin-top: 20px;
+        }
+        #qrCode {
+            margin: 0 auto;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ICFlash</h1>
+        <div class="balance" id="balance">0 ICP</div>
+        <div class="tabs">
+            <div class="tab active" data-tab="send"><i class="fas fa-paper-plane"></i> Send</div>
+            <div class="tab" data-tab="request"><i class="fas fa-hand-holding-usd"></i> Request</div>
+            <div class="tab" data-tab="qr"><i class="fas fa-qrcode"></i> My ID</div>
+        </div>
+        <div id="sendContent" class="tab-content active">
+            <div class="input-group">
+                <i class="fas fa-user input-icon"></i>
+                <input type="text" id="recipient" placeholder="Recipient's Principal ID">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-coins input-icon"></i>
+                <input type="number" id="amount" placeholder="0 ICP">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-comment input-icon"></i>
+                <input type="text" id="note" placeholder="Note (optional)">
+            </div>
+            <button onclick="sendMoney()"><i class="fas fa-paper-plane"></i> Send ICP</button>
+        </div>
+        <div id="requestContent" class="tab-content">
+            <div class="input-group">
+                <i class="fas fa-user input-icon"></i>
+                <input type="text" id="requestFrom" placeholder="Requestee's Principal ID">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-coins input-icon"></i>
+                <input type="number" id="requestAmount" placeholder="0 ICP">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-comment input-icon"></i>
+                <input type="text" id="requestNote" placeholder="Note (optional)">
+            </div>
+            <button onclick="requestMoney()"><i class="fas fa-hand-holding-usd"></i> Request ICP</button>
+        </div>
+        <div id="qrContent" class="tab-content">
+            <div class="qr-code">
+                <div id="qrCode"></div>
+                <p>Scan to view my public Principal ID</p>
+            </div>
+        </div>
+        <div class="transaction-list" id="transactions"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/@dfinity/agent/lib/index.js"></script>
+    <script>
+        let balance = 0;
+        let transactions = [];
+        let principalId = '';
+        let actor;
+
+        async function initializeActor() {
+            const canisterId = 'rrkah-fqaaa-aaaaa-aaaaq-cai'; // Replace with your actual canister ID
+            const agent = new window.ic.HttpAgent();
+            await agent.fetchRootKey();
+            actor = window.ic.Actor.createActor(canisterInterface, { agent, canisterId });
+            principalId = await actor.getMyPrincipalId();
+            loadData();
+        }
+
+        async function loadData() {
+            balance = await actor.getBalance();
+            transactions = await actor.getTransactionHistory();
+            updateBalance();
+            updateTransactionList();
+            generateQRCode();
+        }
+
+        function updateBalance() {
+            document.getElementById('balance').innerText = `${balance.toFixed(2)} ICP`;
+        }
+
+        async function sendMoney() {
+            const recipient = document.getElementById('recipient').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const note = document.getElementById('note').value;
+
+            if (!recipient || isNaN(amount) || amount <= 0) {
+                alert('Please enter a valid recipient Principal ID and amount.');
+                return;
+            }
+
+            try {
+                const result = await actor.sendMoney(window.ic.Principal.fromText(recipient), amount, note ? [note] : []);
+                if ('ok' in result) {
+                    alert('Transaction successful!');
+                    loadData();
+                } else {
+                    alert(`Transaction failed: ${result.err}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+
+            document.getElementById('recipient').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('note').value = '';
+        }
+
+        async function requestMoney() {
+            const requestFrom = document.getElementById('requestFrom').value;
+            const amount = parseFloat(document.getElementById('requestAmount').value);
+            const note = document.getElementById('requestNote').value;
+
+            if (!requestFrom || isNaN(amount) || amount <= 0) {
+                alert('Please enter a valid Principal ID and amount.');
+                return;
+            }
+
+            try {
+                const result = await actor.requestMoney(window.ic.Principal.fromText(requestFrom), amount, note ? [note] : []);
+                if ('ok' in result) {
+                    alert('Request sent successfully!');
+                    loadData();
+                } else {
+                    alert(`Request failed: ${result.err}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+
+            document.getElementById('requestFrom').value = '';
+            document.getElementById('requestAmount').value = '';
+            document.getElementById('requestNote').value = '';
+        }
+
+        function updateTransactionList() {
+            const transactionList = document.getElementById('transactions');
+            transactionList.innerHTML = '';
+
+            transactions.forEach(transaction => {
+                const transactionElement = document.createElement('div');
+                transactionElement.classList.add('transaction');
+                if (transaction.transactionType.hasOwnProperty('send')) {
+                    transactionElement.innerHTML = `
+                        <i class="fas fa-arrow-right transaction-icon"></i>
+                        <div class="transaction-details">
+                            <div>Sent to ${transaction.recipient.toText()}</div>
+                            <div class="transaction-date">${new Date(Number(transaction.timestamp) / 1000000).toLocaleString()}</div>
+                        </div>
+                        <div class="transaction-amount">-${transaction.amount.toFixed(2)} ICP</div>
+                    `;
+                } else {
+                    transactionElement.innerHTML = `
+                        <i class="fas fa-arrow-left transaction-icon"></i>
+                        <div class="transaction-details">
+                            <div>Requested from ${transaction.sender.toText()}</div>
+                            <div class="transaction-date">${new Date(Number(transaction.timestamp) / 1000000).toLocaleString()}</div>
+                        </div>
+                        <div class="transaction-amount">+${transaction.amount.toFixed(2)} ICP</div>
+                    `;
+                }
+                transactionList.appendChild(transactionElement);
+            });
+        }
+
+        function generateQRCode() {
+            const qrCodeContainer = document.getElementById('qrCode');
+            qrCodeContainer.innerHTML = ''; // Clear previous QR code
+            new QRCode(qrCodeContainer, {
+                text: `https://ic0.app/principal/${principalId}`,
+                width: 200,
+                height: 200,
+                colorDark : "#000000",
+                colorLight : "#ffffff"
+            });
+        }
+
+        // Tab functionality
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(`${tab.dataset.tab}Content`).classList.add('active');
+                if (tab.dataset.tab === 'qr') {
+                    generateQRCode();
+                }
+            });
+        });
+
+        // Initialize
+        initializeActor();
+
+        // Canister interface
+        const canisterInterface = ({
+            getBalance: () => ({}),
+            sendMoney: (recipient, amount, note) => ({
+                recipient,
+                amount,
+                note,
+            }),
+            requestMoney: (from, amount, note) => ({
+                from,
+                amount,
+                note,
+            }),
+            getTransactionHistory: () => ({}),
+            getMyPrincipalId: () => ({}),
+        });
+    </script>
+</body>
 </html>

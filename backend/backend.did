@@ -3,15 +3,14 @@ type Transaction =
    amount: float64;
    id: nat;
    note: opt text;
-   recipient: text;
-   sender: text;
-   timestamp: Time;
+   recipient: principal;
+   sender: principal;
+   timestamp: int;
    transactionType: variant {
                       request;
                       send;
                     };
  };
-type Time = int;
 type Result = 
  variant {
    err: text;
@@ -19,9 +18,9 @@ type Result =
  };
 service : {
   addFunds: (float64) -> ();
-  generateQRCode: () -> (text) query;
   getBalance: () -> (float64) query;
+  getMyPrincipalId: () -> (principal) query;
   getTransactionHistory: () -> (vec Transaction) query;
-  requestMoney: (text, float64, opt text) -> (Result);
-  sendMoney: (text, float64, opt text) -> (Result);
+  requestMoney: (principal, float64, opt text) -> (Result);
+  sendMoney: (principal, float64, opt text) -> (Result);
 }

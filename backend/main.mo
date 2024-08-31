@@ -1,3 +1,4 @@
+import Int "mo:base/Int";
 import Nat "mo:base/Nat";
 
 import Float "mo:base/Float";
@@ -6,6 +7,7 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Result "mo:base/Result";
 import Debug "mo:base/Debug";
+import Principal "mo:base/Principal";
 
 actor {
   // Stable variables
@@ -16,10 +18,10 @@ actor {
   type Transaction = {
     id : Nat;
     amount : Float;
-    recipient : Text;
-    sender : Text;
+    recipient : Principal;
+    sender : Principal;
     note : ?Text;
-    timestamp : Time.Time;
+    timestamp : Int;
     transactionType : {#send; #request};
   };
 
@@ -33,7 +35,7 @@ actor {
     return balance;
   };
 
-  public func sendMoney(recipient : Text, amount : Float, note : ?Text) : async Result.Result<(), Text> {
+  public shared(msg) func sendMoney(recipient : Principal, amount : Float, note : ?Text) : async Result.Result<(), Text> {
     if (amount <= 0) {
       return #err("Amount must be greater than zero");
     };
@@ -46,16 +48,16 @@ actor {
       id = generateTransactionId();
       amount = amount;
       recipient = recipient;
-      sender = "self";
+      sender = msg.caller;
       note = note;
       timestamp = Time.now();
       transactionType = #send;
     };
     transactions := Array.append(transactions, [transaction]);
-    #ok()
+    #ok(())
   };
 
-  public func requestMoney(from : Text, amount : Float, note : ?Text) : async Result.Result<(), Text> {
+  public shared(msg) func requestMoney(from : Principal, amount : Float, note : ?Text) : async Result.Result<(), Text> {
     if (amount <= 0) {
       return #err("Amount must be greater than zero");
     };
@@ -63,24 +65,22 @@ actor {
     let transaction : Transaction = {
       id = generateTransactionId();
       amount = amount;
-      recipient = "self";
+      recipient = msg.caller;
       sender = from;
       note = note;
       timestamp = Time.now();
       transactionType = #request;
     };
     transactions := Array.append(transactions, [transaction]);
-    #ok()
+    #ok(())
   };
 
   public query func getTransactionHistory() : async [Transaction] {
     return transactions;
   };
 
-  public query func generateQRCode() : async Text {
-    // In a real implementation, this would generate a proper QR code
-    // For this MVP, we'll just return a placeholder string
-    return "QR_CODE_PLACEHOLDER";
+  public query({caller}) func getMyPrincipalId() : async Principal {
+    return caller;
   };
 
   // For development purposes only
