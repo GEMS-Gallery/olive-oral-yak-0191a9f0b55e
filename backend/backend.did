@@ -1,0 +1,27 @@
+type Transaction = 
+ record {
+   amount: float64;
+   id: nat;
+   note: opt text;
+   recipient: text;
+   sender: text;
+   timestamp: Time;
+   transactionType: variant {
+                      request;
+                      send;
+                    };
+ };
+type Time = int;
+type Result = 
+ variant {
+   err: text;
+   ok;
+ };
+service : {
+  addFunds: (float64) -> ();
+  generateQRCode: () -> (text) query;
+  getBalance: () -> (float64) query;
+  getTransactionHistory: () -> (vec Transaction) query;
+  requestMoney: (text, float64, opt text) -> (Result);
+  sendMoney: (text, float64, opt text) -> (Result);
+}
